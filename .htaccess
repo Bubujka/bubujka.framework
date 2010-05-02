@@ -1,0 +1,10 @@
+Options -Indexes
+RewriteEngine On
+RewriteBase /
+AddDefaultCharset UTF-8
+php_value magic_quotes_gpc 0
+
+RewriteCond $1 !^(public|uploads|file_loader|robots\.txt)
+RewriteRule ^(.*)$ index.php?/$1 [L,QSA]
+
+RewriteRule ^public/(.*)$ file_loader.php?/$1 [L]
