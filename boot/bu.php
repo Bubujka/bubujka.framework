@@ -40,21 +40,8 @@ class bu{
             return buConfig::set($configFullPath,$value);
     }
 
-    private static function getViewFile($pathArray){
-        if (is_string($pathArray))
-            $pathArray = array($pathArray);
-        $coreDir = BuCore::fstab('viewCore').'/';
-        $prjDir = BuCore::fstab('viewPrj').'/';
-        $hostDir = BuCore::fstab('viewHostDir').'/'.HTTP_HOST.'/';
-        foreach ($pathArray as $path){
-            if($path=='blank')
-                return 'blank';
-            foreach(array($hostDir,$prjDir,$coreDir) as $v)
-                if(file_exists($v.$path.'.php'))
-                    return $v.$path.'.php';
-        }
-        throw new Exception('View: '.implode(', ',$pathArray).' not exists');
-    }
+    
+
 
     public static function view($_b_name, $_b_data = array()){
         if(!$_b_data)
@@ -103,38 +90,6 @@ class bu{
         return self::$_path[$segment];
     }
 
-    private static function getHookFile($pathArray){
-        if (is_string($pathArray))
-            $pathArray = array($pathArray);
-        $coreDir = BuCore::fstab('hookCore').'/';
-        $prjDir = BuCore::fstab('hookPrj').'/';
-        $hostDir = BuCore::fstab('hookHostDir').'/'.HTTP_HOST.'/';
-
-        foreach ($pathArray as $path){
-            if($path=='blank')
-                return 'blank';
-            foreach(array($hostDir,$prjDir,$coreDir) as $v)
-                if(file_exists($v.$path.'.php'))
-                    return $v.$path.'.php';
-        }
-        throw new Exception('Hook: '.$path.' not exists');
-    }
-    private static function getActFile($pathArray){
-        if (is_string($pathArray))
-            $pathArray = array($pathArray);
-        $coreDir = BuCore::fstab('actCore').'/';
-        $prjDir = BuCore::fstab('actPrj').'/';
-        $hostDir = BuCore::fstab('actHostDir').'/'.HTTP_HOST.'/';
-
-        foreach ($pathArray as $path){
-            if($path=='blank')
-                return 'blank';
-            foreach(array($hostDir,$prjDir,$coreDir) as $v)
-                if(file_exists($v.$path.'.php'))
-                    return $v.$path.'.php';
-        }
-        throw new Exception('Action: '.$path.' not exists');
-    }
 
 
     public static function act($_b_name, $_b_data = array()){
@@ -160,23 +115,14 @@ class bu{
         if($_b_file != 'blank')
             include($_b_file); 
     }
-    private static function getLibFile($path){
-        $coreDir = BuCore::fstab('snipCore').'/';
-        $prjDir = BuCore::fstab('snipPrj').'/';
-        $hostDir = BuCore::fstab('snipHostDir').'/'.HTTP_HOST.'/';
-        foreach(array($hostDir,$prjDir,$coreDir) as $v)
-            if(file_exists($v.$path.'.php'))
-                return $v.$path.'.php';
-        throw new Exception('Library: '.$path.' not exists');
-    }
-
-
     public static function lib($path, $reload=false){
         $filePath = self::getLibFile($path);
+        if($filePath == 'blank')
+            return;
         if($reload)
-            include($filePath);
+            require($filePath);
         else
-            include_once($filePath);
+            require_once($filePath);
     }
 
     private static $_ormPeer = array();
@@ -216,6 +162,36 @@ class bu{
                 $url = str_replace(':'.$k,$v, $url);
         return $url;
     }
+    private static function getFile($pathArray, $fstabPrefix, $exceptionString){
+        if (is_string($pathArray))
+            $pathArray = array($pathArray);
+        $coreDir = BuCore::fstab($fstabPrefix.'Core').'/';
+        $prjDir = BuCore::fstab($fstabPrefix.'Prj').'/';
+        $hostDir = BuCore::fstab($fstabPrefix.'HostDir').'/'.HTTP_HOST.'/';
+        foreach ($pathArray as $path){
+            if($path=='blank')
+                return 'blank';
+            foreach(array($hostDir,$prjDir,$coreDir) as $v)
+                if(file_exists($v.$path.'.php'))
+                    return $v.$path.'.php';
+        }
+
+        throw new Exception(sprintf($exceptionString, implode(', ',$pathArray)));
+    }
+    private static function getViewFile($pathArray){
+        return self::getFile($pathArray, 'view', 'View: %s not exists');
+    }
+    private static function getHookFile($pathArray){
+        return self::getFile($pathArray, 'hook', 'Hook: %s not exists');
+    }
+    private static function getActFile($pathArray){
+        return self::getFile($pathArray, 'act', 'Action: %s not exists');
+    }
+    private static function getLibFile($pathArray){
+        return self::getFile($pathArray, 'snip', 'Library: %s not exists');
+    }
+
+
 
 }
 ?>
