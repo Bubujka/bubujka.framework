@@ -14,3 +14,5 @@ browserPublicPath: '/public/'
 browserUploadPath: '/uploads/'
 
 uploadPath: <?php echo BASE_DIRECTORY.'/uploads'?>
+
+defaultLanguage: ru

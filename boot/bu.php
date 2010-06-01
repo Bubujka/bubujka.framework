@@ -40,8 +40,14 @@ class bu{
             return buConfig::set($configFullPath,$value);
     }
 
-    
-
+    public static function currentLanguage(){
+        if(isset($_SESSION['language']) and $_SESSION['language'])
+            return $_SESSION['language'];
+        return self::config('rc/defaultLanguage');
+    }
+    public static function lang($path){
+        return self::config('lang/'.self::currentLanguage().'/'.$path);
+    }
 
     public static function view($_b_name, $_b_data = array()){
         if(!$_b_data)
