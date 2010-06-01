@@ -103,6 +103,22 @@ class bu{
         return self::$_path[$segment];
     }
 
+    private static function getHookFile($pathArray){
+        if (is_string($pathArray))
+            $pathArray = array($pathArray);
+        $coreDir = BuCore::fstab('hookCore').'/';
+        $prjDir = BuCore::fstab('hookPrj').'/';
+        $hostDir = BuCore::fstab('hookHostDir').'/'.HTTP_HOST.'/';
+
+        foreach ($pathArray as $path){
+            if($path=='blank')
+                return 'blank';
+            foreach(array($hostDir,$prjDir,$coreDir) as $v)
+                if(file_exists($v.$path.'.php'))
+                    return $v.$path.'.php';
+        }
+        throw new Exception('Hook: '.$path.' not exists');
+    }
     private static function getActFile($pathArray){
         if (is_string($pathArray))
             $pathArray = array($pathArray);
@@ -135,13 +151,14 @@ class bu{
         return $_b_view_html;
     }
 
-    public static function hook($name,$data=array()){
-        if(is_string($name))
-            $name = array($name);
-        foreach($name as $k=>$v)
-            if($v!='blank')
-                $name[$k]='hook/'.$v;
-        echo self::act($name,$data);
+    public static function hook($_b_name,$_b_data=array()){
+        if(!$_b_data)
+            $_b_data = array();
+        foreach ($_b_data as $k => $v)
+            $$k = $v;
+        $_b_file = self::getHookFile($_b_name);
+        if($_b_file != 'blank')
+            include($_b_file); 
     }
     private static function getLibFile($path){
         $coreDir = BuCore::fstab('snipCore').'/';
