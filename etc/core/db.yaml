@@ -1,5 +1,7 @@
-host: 'localhost'
-user: 
-password: 
-database: 
-prefix: 
+default:
+    host: 'localhost'
+    user: 'root'
+    database: 'bubujka_dev'
+    driver: 'mysql'
+    password:
+    prefix:

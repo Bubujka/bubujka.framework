@@ -5,3 +5,5 @@ if (bu::isValidRequest()){
     bu::hook('session/pages');
     bu::hook('session/flash');
 }
+
+bu::hook('php_activerecord');

@@ -161,7 +161,18 @@ class bu{
         else
             require_once($filePath);
     }
-
+    private static $_db = array();
+    public static function db($configName='default'){
+        if(!isset(self::$_db[$configName])){
+            $config = bu::config('db/'.$configName);
+            self::$_db[$configName] = new PDO($config['driver'].':host='.
+                                          $config['host'].';dbname='.
+                                          $config['database'],
+                                          $config['user'],
+                                          $config['password']);
+        }
+        return self::$_db[$configName];
+    }
     private static $_ormPeer = array();
     public static function orm($path){
         self::lib('orm/'.$path);
