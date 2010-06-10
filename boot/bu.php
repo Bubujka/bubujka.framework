@@ -40,9 +40,36 @@ class bu{
             return buConfig::set($configFullPath,$value);
     }
 
+    public static function flash($key, $value = NULL){
+        if(is_null($value)){
+            $flashInfo = bu::session('flash');
+            if(isset($flashInfo[$key]))
+                return $flashInfo[$key]['text'];
+        }else{
+            $flashInfo = bu::session('flash');
+            $flashInfo[$key] = array('text'=>$value,'valid'=>true);
+            bu::session('flash',$flashInfo);
+        }
+    }
+    public static function isValidRequest(){
+        if(!preg_match('/(js|css|jpeg|jpg|gif|ico|png|rss)$/', 
+                      strtolower(RAW_HTTP_STRING)))
+            return true;
+    }
+    public static function isInvalidRequest(){
+        return !bu::isValidRequest();
+    }
+    public static function session($key,$value = NULL){
+        bu::lib('session');
+        if (count(func_get_args())==1)
+            return Session::get($key);
+        else
+            return Session::set($key,$value);
+    }
     public static function currentLanguage(){
-        if(isset($_SESSION['language']) and $_SESSION['language'])
-            return $_SESSION['language'];
+        $sessionLanguage = bu::session('language');
+        if($sessionLanguage and preg_match('/^[a-z]{2}$/',$sessionLanguage))
+            return $sessionLanguage;
         return self::config('rc/defaultLanguage');
     }
     public static function lang($path){
@@ -72,6 +99,10 @@ class bu{
             print ('--'.$text.'--');
     }
     public static function redirect($url){
+        if($url=='back'){
+            $pages = bu::session('pages');
+            $url = $pages['previous'];
+        }
         header('Location: '.$url);
         exit;
     }
