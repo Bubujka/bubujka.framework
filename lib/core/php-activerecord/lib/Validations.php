@@ -136,6 +136,7 @@ class Validations
 		foreach ($this->validators as $validate)
 			$this->$validate($reflection->getStaticPropertyValue($validate));
 
+		$this->record->clear_model();
 		return $this->record;
 	}
 
@@ -256,7 +257,7 @@ class Validations
 	 * Available options:
 	 *
 	 * <ul>
-	 * <li><b>integer_only:</b> value must be an integer (e.g. not a float)</li>
+	 * <li><b>only_integer:</b> value must be an integer (e.g. not a float)</li>
 	 * <li><b>even:</b> must be even</li>
 	 * <li><b>odd:</b> must be odd"</li>
 	 * <li><b>greater_than:</b> must be greater than specified number</li>
@@ -288,16 +289,16 @@ class Validations
 
 			if (true === $options['only_integer'] && !is_integer($var))
 			{
-				if (preg_match('/\A[+-]?\d+\Z/', (string)($var)))
-					break;
+				if (!preg_match('/\A[+-]?\d+\Z/', (string)($var)))
+				{
+					if (isset($options['message']))
+						$message = $options['message'];
+					else
+						$message = Errors::$DEFAULT_ERROR_MESSAGES['not_a_number'];
 
-				if (isset($options['message']))
-					$message = $options['message'];
-				else
-					$message = Errors::$DEFAULT_ERROR_MESSAGES['not_a_number'];
-
-				$this->record->add($attribute, $message);
-				continue;
+					$this->record->add($attribute, $message);
+					continue;
+				}
 			}
 			else
 			{
@@ -311,7 +312,7 @@ class Validations
 			}
 
 			foreach ($numericalityOptions as $option => $check)
-       		{
+			{
 				$option_value = $options[$option];
 
 				if ('odd' != $option && 'even' != $option)
@@ -576,6 +577,7 @@ class Validations
 
 			foreach ($fields as $field)
 			{
+				$field = $this->model->get_real_attribute_name($field);
 				$sql .= " and {$field}=?";
 				array_push($conditions,$this->model->$field);
 			}
@@ -609,26 +611,26 @@ class Errors implements IteratorAggregate
 	private $errors;
 
 	public static $DEFAULT_ERROR_MESSAGES = array(
-   		'inclusion'		=> "%s is not included in the list",
-     	'exclusion'		=> "%s is reserved",
-      	'invalid'		=> "%s is invalid",
-      	'confirmation'	=> "%s doesn't match confirmation",
-      	'accepted'		=> "%s must be accepted",
-      	'empty'			=> "%s can't be empty",
-      	'blank'			=> "%s can't be blank",
-      	'too_long'		=> "%s is too long (maximum is %d characters)",
-      	'too_short'		=> "%s is too short (minimum is %d characters)",
-      	'wrong_length'	=> "%s is the wrong length (should be %d characters)",
-      	'taken'			=> "%s has already been taken",
-      	'not_a_number'	=> "%s is not a number",
-      	'greater_than'	=> "%s must be greater than %d",
-      	'equal_to'		=> "%s must be equal to %d",
-      	'less_than'		=> "%s must be less than %d",
-      	'odd'			=> "%s must be odd",
-      	'even'			=> "%s must be even",
-		'unique'		=> "%s must be unique",
-      	'less_than_or_equal_to' => "%s must be less than or equal to %d",
-      	'greater_than_or_equal_to' => "%s must be greater than or equal to %d"
+   		'inclusion'		=> "is not included in the list",
+     	'exclusion'		=> "is reserved",
+      	'invalid'		=> "is invalid",
+      	'confirmation'	=> "doesn't match confirmation",
+      	'accepted'		=> "must be accepted",
+      	'empty'			=> "can't be empty",
+      	'blank'			=> "can't be blank",
+      	'too_long'		=> "is too long (maximum is %d characters)",
+      	'too_short'		=> "is too short (minimum is %d characters)",
+      	'wrong_length'	=> "is the wrong length (should be %d characters)",
+      	'taken'			=> "has already been taken",
+      	'not_a_number'	=> "is not a number",
+      	'greater_than'	=> "must be greater than %d",
+      	'equal_to'		=> "must be equal to %d",
+      	'less_than'		=> "must be less than %d",
+      	'odd'			=> "must be odd",
+      	'even'			=> "must be even",
+		'unique'		=> "must be unique",
+      	'less_than_or_equal_to' => "must be less than or equal to %d",
+      	'greater_than_or_equal_to' => "must be greater than or equal to %d"
    	);
 
    	/**
@@ -640,6 +642,15 @@ class Errors implements IteratorAggregate
 	public function __construct(Model $model)
 	{
 		$this->model = $model;
+	}
+
+	/**
+	 * Nulls $model so we don't get pesky circular references. $model is only needed during the
+	 * validation process and so can be safely cleared once that is done.
+	 */
+	public function clear_model()
+	{
+		$this->model = null;
 	}
 
 	/**
@@ -699,7 +710,7 @@ class Errors implements IteratorAggregate
 		if (!$msg)
 			$msg = self::$DEFAULT_ERROR_MESSAGES['blank'];
 
-		if (!$this->model->$attribute)
+		if (($value = $this->model->$attribute) === '' || $value === null)
 			$this->add($attribute, $msg);
 	}
 
@@ -761,7 +772,7 @@ class Errors implements IteratorAggregate
 					if (is_null($msg))
 						continue;
 
-					$full_messages[] = str_replace('%s',Utils::human_attribute($attribute), $msg);
+					$full_messages[] = Utils::human_attribute($attribute) . ' ' . $msg;
 				}
 			}
 		}

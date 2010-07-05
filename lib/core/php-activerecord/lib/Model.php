@@ -3,7 +3,6 @@
  * @package ActiveRecord
  */
 namespace ActiveRecord;
-use DateTime;
 
 /**
  * The base class for your models.
@@ -235,7 +234,7 @@ class Model
 	 * You can also use this to define custom setters for attributes as well.
 	 *
 	 * <code>
-	 * class User extends ActiveRecord\Base {
+	 * class User extends ActiveRecord\Model {
 	 *   static $setters = array('password','more','even_more');
 	 *
 	 *   # now to define the setter methods. Note you must
@@ -257,7 +256,7 @@ class Model
 	 * custom setter for 'name':
 	 *
 	 * <code>
-	 * class User extends ActiveRecord\Base {
+	 * class User extends ActiveRecord\Model {
 	 *   static $setters = array('name');
 	 *
 	 *   # INCORRECT way to do it
@@ -283,7 +282,7 @@ class Model
 	 * Define customer getter methods for the model.
 	 *
 	 * <code>
-	 * class User extends ActiveRecord\Base {
+	 * class User extends ActiveRecord\Model {
 	 *   static $getters = array('middle_initial','more','even_more');
 	 *
 	 *   # now to define the getter method. Note you must
@@ -305,7 +304,7 @@ class Model
 	 * custom getter for 'name':
 	 *
 	 * <code>
-	 * class User extends ActiveRecord\Base {
+	 * class User extends ActiveRecord\Model {
 	 *   static $getters = array('name');
 	 *
 	 *   # INCORRECT way to do it
@@ -356,6 +355,12 @@ class Model
 		}
 
 		$this->set_attributes_via_mass_assignment($attributes, $guard_attributes);
+
+		// since all attribute assignment now goes thru assign_attributes() we want to reset
+		// dirty if instantiating via find since nothing is really dirty when doing that
+		if ($instantiating_via_find)
+			$this->__dirty = array();
+
 		$this->invoke_callback('after_construct',false);
 	}
 
@@ -423,6 +428,12 @@ class Model
 		throw new UndefinedPropertyException(get_called_class(),$name);
 	}
 
+	public function __wakeup()
+	{
+		// make sure the models Table instance gets initialized when waking up
+		static::table();
+	}
+
 	/**
 	 * Assign a value to an attribute.
 	 *
@@ -430,18 +441,24 @@ class Model
 	 * @param mixed &$value Value of the attribute
 	 * @return mixed the attribute value
 	 */
-	public function assign_attribute($name, &$value)
+	public function assign_attribute($name, $value)
 	{
 		$table = static::table();
-
-		if (!$this->__dirty)
-			$this->__dirty = array();
 
 		if (array_key_exists($name,$table->columns) && !is_object($value))
 			$value = $table->columns[$name]->cast($value,static::connection());
 
+		// convert php's \DateTime to ours
+		if ($value instanceof \DateTime)
+			$value = new DateTime($value->format('Y-m-d H:i:s T'));
+
+		// make sure DateTime values know what model they belong to so
+		// dirty stuff works when calling set methods on the DateTime object
+		if ($value instanceof DateTime)
+			$value->attribute_of($this,$name);
+
 		$this->attributes[$name] = $value;
-		$this->__dirty[$name] = true;
+		$this->flag_dirty($name);
 		return $value;
 	}
 
@@ -508,6 +525,19 @@ class Model
 	}
 
 	/**
+	 * Flags an attribute as dirty.
+	 *
+	 * @param string $name Attribute name
+	 */
+	public function flag_dirty($name)
+	{
+		if (!$this->__dirty)
+			$this->__dirty = array();
+
+		$this->__dirty[$name] = true;
+	}
+
+	/**
 	 * Returns hash of attributes that have been modified since loading the model.
 	 *
 	 * @return mixed null if no dirty attributes otherwise returns array of dirty attributes.
@@ -539,6 +569,23 @@ class Model
 	public function get_primary_key()
 	{
 		return Table::load(get_class($this))->pk;
+	}
+
+	/**
+	 * Returns the actual attribute name if $name is aliased.
+	 *
+	 * @param string $name An attribute name
+	 * @return string
+	 */
+	public function get_real_attribute_name($name)
+	{
+		if (array_key_exists($name,$this->attributes))
+			return $name;
+
+		if (array_key_exists($name,static::$alias_attribute))
+			return static::$alias_attribute[$name];
+
+		return null;
 	}
 
 	/**
@@ -722,11 +769,10 @@ class Model
 	{
 		$this->verify_not_readonly('insert');
 
-		if ($validate && !$this->_validate())
+		if (($validate && !$this->_validate() || !$this->invoke_callback('before_create',false)))
 			return false;
 
 		$table = static::table();
-		$this->invoke_callback('before_create',false);
 
 		if (!($attributes = $this->dirty_attributes()))
 			$attributes = $this->attributes;
@@ -791,7 +837,9 @@ class Model
 			if (empty($pk))
 				throw new ActiveRecordException("Cannot update, no primary key defined for: " . get_called_class());
 
-			$this->invoke_callback('before_update',false);
+			if (!$this->invoke_callback('before_update',false))
+				return false;
+
 			$dirty = $this->dirty_attributes();
 			static::table()->update($dirty,$pk);
 			$this->invoke_callback('after_update',false);
@@ -814,7 +862,9 @@ class Model
 		if (empty($pk))
 			throw new ActiveRecordException("Cannot delete, no primary key defined for: " . get_called_class());
 
-		$this->invoke_callback('before_destroy',false);
+		if (!$this->invoke_callback('before_destroy',false))
+			return false;
+
 		static::table()->delete($pk);
 		$this->invoke_callback('after_destroy',false);
 
@@ -1008,7 +1058,7 @@ class Model
 					continue;
 
 				// set arbitrary data
-				$this->attributes[$name] = $value;
+				$this->assign_attribute($name,$value);
 			}
 		}
 
@@ -1594,6 +1644,7 @@ class Model
 	 * </code>
 	 *
 	 * @param Closure $closure The closure to execute. To cause a rollback have your closure return false or throw an exception.
+	 * @return boolean True if the transaction was committed, False if rolled back.
 	 */
 	public static function transaction($closure)
 	{
@@ -1604,7 +1655,10 @@ class Model
 			$connection->transaction();
 
 			if ($closure() === false)
+			{
 				$connection->rollback();
+				return false;
+			}
 			else
 				$connection->commit();
 		}
@@ -1613,6 +1667,7 @@ class Model
 			$connection->rollback();
 			throw $e;
 		}
+		return true;
 	}
 };
 ?>

@@ -288,30 +288,33 @@ class ActiveRecordTest extends DatabaseTest
 	public function test_transaction_committed()
 	{
 		$original = Author::count();
-		Author::transaction(function() { Author::create(array("name" => "blah")); });
+		$ret = Author::transaction(function() { Author::create(array("name" => "blah")); });
 		$this->assert_equals($original+1,Author::count());
+		$this->assert_true($ret);
 	}
-
+	
 	public function test_transaction_committed_when_returning_true()
 	{
 		$original = Author::count();
-		Author::transaction(function() { Author::create(array("name" => "blah")); return true; });
+		$ret = Author::transaction(function() { Author::create(array("name" => "blah")); return true; });
 		$this->assert_equals($original+1,Author::count());
+		$this->assert_true($ret);
 	}
-
+	
 	public function test_transaction_rolledback_by_returning_false()
 	{
 		$original = Author::count();
-
-		Author::transaction(function()
+		
+		$ret = Author::transaction(function()
 		{
 			Author::create(array("name" => "blah"));
 			return false;
 		});
-
+		
 		$this->assert_equals($original,Author::count());
+		$this->assert_false($ret);
 	}
-
+	
 	public function test_transaction_rolledback_by_throwing_exception()
 	{
 		$original = Author::count();
@@ -430,6 +433,35 @@ class ActiveRecordTest extends DatabaseTest
 
 		$this->assert_true($book_table1 === $book_table2);
 		$this->assert_true($book_table1 !== $book_table3);
+	}
+
+	public function test_flag_dirty()
+	{
+		$author = new Author();
+		$author->flag_dirty('some_date');
+		$this->assert_has_keys('some_date', $author->dirty_attributes());
+	}
+
+	public function test_assigning_php_datetime_gets_converted_to_ar_datetime()
+	{
+		$author = new Author();
+		$author->created_at = $now = new \DateTime();
+		$this->assert_is_a("ActiveRecord\\DateTime",$author->created_at);
+		$this->assert_datetime_equals($now,$author->created_at);
+	}
+
+	public function test_assigning_from_mass_assignment_php_datetime_gets_converted_to_ar_datetime()
+	{
+		$author = new Author(array('created_at' => new \DateTime()));
+		$this->assert_is_a("ActiveRecord\\DateTime",$author->created_at);
+	}
+
+	public function test_get_real_attribute_name()
+	{
+		$venue = new Venue();
+		$this->assert_equals('name', $venue->get_real_attribute_name('name'));
+		$this->assert_equals('name', $venue->get_real_attribute_name('marquee'));
+		$this->assert_equals(null, $venue->get_real_attribute_name('invalid_field'));
 	}
 };
 ?>

@@ -6,9 +6,10 @@ use ActiveRecord as AR;
 class BookValidations extends ActiveRecord\Model
 {
 	static $table_name = 'books';
+	static $alias_attribute = array('name_alias' => 'name', 'x' => 'secondary_author_id');
 	static $validates_presence_of = array(array('name'));
 	static $validates_uniqueness_of = array();
-};
+}
 
 class ValidationsTest extends DatabaseTest
 {
@@ -100,10 +101,25 @@ class ValidationsTest extends DatabaseTest
 		$this->assert_equals(array('Name and special must be unique'),$book2->errors->full_messages());
 	}
 
+	public function test_validates_uniqueness_of_works_with_alias_attribute()
+	{
+		BookValidations::$validates_uniqueness_of[0] = array(array('name_alias','x'));
+		$book = BookValidations::create(array('name_alias' => 'Another Book', 'x' => 2));
+		$this->assert_false($book->is_valid());
+		$this->assert_equals(array('Name alias and x must be unique'), $book->errors->full_messages());
+	}
+
 	public function test_get_validation_rules()
 	{
 		$validators = BookValidations::first()->get_validation_rules();
 		$this->assert_true(in_array(array('validator' => 'validates_presence_of'),$validators['name']));
+	}
+
+	public function test_model_is_nulled_out_to_prevent_memory_leak()
+	{
+		$book = new BookValidations();
+		$book->is_valid();
+		$this->assert_true(strpos(serialize($book->errors),'model";N;') !== false);
 	}
 };
 ?>

@@ -4,9 +4,9 @@ require_once dirname(__FILE__) . '/../lib/adapters/OciAdapter.php';
 
 class OciAdapterTest extends AdapterTest
 {
-	public function setUp($connection_name=null)
+	public function set_up($connection_name=null)
 	{
-		parent::setUp('oci');
+		parent::set_up('oci');
 	}
 
 	public function test_get_sequence_name()
@@ -23,7 +23,12 @@ class OciAdapterTest extends AdapterTest
 
 	public function test_datetime_to_string()
 	{
-		$this->assert_equals('01-JAN-2009 01:01:01 AM',$this->conn->datetime_to_string(date_create('2009-01-01 01:01:01 EST')));
+		$this->assert_equals('01-Jan-2009 01:01:01 AM',$this->conn->datetime_to_string(date_create('2009-01-01 01:01:01 EST')));
+	}
+
+	public function test_date_to_string()
+	{
+		$this->assert_equals('01-Jan-2009',$this->conn->date_to_string(date_create('2009-01-01 01:01:01 EST')));
 	}
 
 	public function test_insert_id() {}

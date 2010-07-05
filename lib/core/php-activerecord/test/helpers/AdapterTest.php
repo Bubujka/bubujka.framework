@@ -5,12 +5,13 @@ class AdapterTest extends DatabaseTest
 {
 	const InvalidDb = '__1337__invalid_db__';
 
-	public function setUp($connection_name=null)
+	public function set_up($connection_name=null)
 	{
-		if ($connection_name && !in_array($connection_name, PDO::getAvailableDrivers()))
+		if (($connection_name && !in_array($connection_name, PDO::getAvailableDrivers())) ||
+			ActiveRecord\Config::instance()->get_connection($connection_name) == 'skip')
 			$this->mark_test_skipped($connection_name . ' drivers are not present');
 
-		parent::setUp($connection_name);
+		parent::set_up($connection_name);
 	}
 
 	public function test_i_has_a_default_port_unless_im_sqlite()
@@ -393,6 +394,12 @@ class AdapterTest extends DatabaseTest
 	{
 		$datetime = '2009-01-01 01:01:01 EST';
 		$this->assert_equals($datetime,$this->conn->datetime_to_string(date_create($datetime)));
+	}
+
+	public function test_date_to_string()
+	{
+		$datetime = '2009-01-01';
+		$this->assert_equals($datetime,$this->conn->date_to_string(date_create($datetime)));
 	}
 }
 ?>
