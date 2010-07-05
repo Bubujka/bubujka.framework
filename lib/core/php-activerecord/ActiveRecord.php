@@ -20,7 +20,9 @@ require 'lib/Exceptions.php';
 spl_autoload_register('activerecord_autoload');
 
 function activerecord_autoload($class_name){
-    bu::lib('models/'.$class_name);
+    
+    $inflector = new ActiveRecord\StandardInflector;
+    bu::lib('models/'.$inflector->uncamelize($class_name));
 /*
 	$path = ActiveRecord\Config::instance()->get_model_directory();
 	$root = realpath(isset($path) ? $path : '.');
