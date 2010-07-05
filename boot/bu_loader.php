@@ -31,11 +31,12 @@ class BuLoader{
             $layout = bu::layout('panic');
             $content = $msg;
             if(bu::config('rc/debug')){
-                #$content .= sprintf('<br><b>%s</b><br>',get_class($e));
-                #$content .= "<pre>";
-                #foreach (array_reverse($e->getTrace()) as $v)
-                    #$content .= $v['line'].' '.$v['file']."\n";
-                #$content .= "</pre>";
+                $content .= sprintf('<br><b>%s</b><br>',get_class($e));
+                $content .= "<pre>";
+                foreach (array_reverse($e->getTrace()) as $v)
+                    if(isset($v['line']))
+                        $content .= $v['line'].' '.$v['file']."\n";
+                $content .= "</pre>";
             }
             $layout->setContent($content);
             $layout->generate();

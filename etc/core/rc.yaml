@@ -15,4 +15,5 @@ browserUploadPath: '/uploads/'
 
 uploadPath: <?php echo BASE_DIRECTORY.'/uploads'?>
 
-defaultLanguage: ru
+defaultLanguage: 'ru'
+defaultLayout: 'bubujka_basic'

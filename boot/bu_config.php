@@ -71,7 +71,7 @@ class buConfig{
         if( !file_exists($configCoreDir.$configPath.'.yaml') and
             !file_exists($configPrjDir.$configPath.'.yaml') and
             !file_exists($configHostDir.$configPath.'.yaml') ) 
-            throw new Exception('Config file not exists');
+            throw new Exception('Config file '.$configPath.' not exists');
         $config = array();
         foreach(array($configCoreDir,$configPrjDir,$configHostDir) as $v)
             if(file_exists($v.$configPath.'.yaml')) {

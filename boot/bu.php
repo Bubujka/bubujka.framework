@@ -1,29 +1,5 @@
 <?php
 
-/*
-    public static function timer($name = false, $group = false){
-    public static function log($name=false, $group=false, $data=false){
-
-    public static function config($configFullPath, $value = false){
-    public static function view($_b_name, $_b_data = array()){
-    public static function act($_b_name, $_b_data = array()){
-    public static function lib($path, $reload=false){
-
-    public static function args($segment = false){
-    public static function path($segment = false){
-
-    public static function hook($name,$data=array()){
-    public static function orm($path){
-    public static function layout($name){
-
-    public static function deprecated($text){
-
-    public static function pub($path){
-    public static function up($path){
-
-    public static function url($path,$data = array()){
-    public static function redirect($url){
-*/
 class bu{
     public static function timer($name = false, $group = false){
         buStatistic::timer($name,$group);
@@ -47,7 +23,11 @@ class bu{
                 return $flashInfo[$key]['text'];
         }else{
             $flashInfo = bu::session('flash');
-            $flashInfo[$key] = array('text'=>$value,'valid'=>true);
+            if($key=='error' and is_array($value))
+                $text = bu::view('errors',array('errors'=>$value));
+            else
+                $text = $value;
+            $flashInfo[$key] = array('text'=>$text,'valid'=>true);
             bu::session('flash',$flashInfo);
         }
     }
@@ -150,7 +130,7 @@ class bu{
             $$k = $v;
         $_b_file = self::getHookFile($_b_name);
         if($_b_file != 'blank')
-            include($_b_file); 
+            return include($_b_file); 
     }
     public static function lib($path, $reload=false){
         $filePath = self::getLibFile($path);
@@ -185,7 +165,9 @@ class bu{
     }
 
     private static $_layouts = array();
-    public static function layout($name){
+    public static function layout($name=null){
+        if(!$name)
+            $name = bu::config('rc/defaultLayout');
         self::lib('bu/layout');
         if(!isset(self::$_layouts[$name])){
             self::lib('layout/'.$name);
@@ -242,4 +224,3 @@ class bu{
 
 
 }
-?>
