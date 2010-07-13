@@ -6,6 +6,7 @@
                         array('title'=>$title, 
                               'keywords'=>$keywords, 
                               'description'=>$description));?>
+    <?php echo bu::view('header/blueprint');?>
     <style>
     #header{
         height: 30px;
@@ -22,6 +23,9 @@
         </div> 
     </div> 
 
+    <div class='span-22 prepend-1'> 
+	<?php echo bu::act('flash_block');?>
+    </div>
     <div class='span-22 prepend-1'> 
         <h1 class='alt'><?php echo $title?></h1>
         <div class='span-15 prepend-2'>
