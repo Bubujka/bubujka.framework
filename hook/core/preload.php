@@ -1,4 +1,5 @@
 <?php
+bu::lib('helpers/shortcut');
 bu::hook('session/init');
 
 if (bu::isValidRequest()){
@@ -8,4 +9,3 @@ if (bu::isValidRequest()){
 }
 
 bu::hook('php_activerecord');
-bu::lib('helpers/h');
