@@ -79,10 +79,14 @@ class bu{
             print ('--'.$text.'--');
     }
     public static function redirect($url){
+        $pages = bu::session('pages');
+	if($pages['num_redirects'] >= 5)
+		$url = '/';
         if($url=='back'){
-            $pages = bu::session('pages');
             $url = $pages['previous'];
         }
+	$pages['num_redirects']++;
+	bu::session('pages',$pages);
         header('Location: '.$url);
         exit;
     }
