@@ -1,10 +1,12 @@
 <?php
+$layout->_content_view = 'icons';
 if(bu::args(0) == 'png')
 	$format = 'png';
 else
 	$format = 'gif';
 $name = 'FamFamFam:Flag';
-$prefix = sf('ico/famfamfam/flag/%s/',$format);
+$layout->title = sf('%s %s',$name,' icons set');
+$layout->prefix = sf('ico/famfamfam/flag/%s/',$format);
 $iconNames = array( 'ad', 'ae', 'af', 'ag', 'ai', 'al', 'am', 'an', 'ao', 'ar',
 'as', 'at', 'au', 'aw', 'ax', 'az', 'ba', 'bb', 'bd', 'be', 'bf', 'bg', 'bh',
 'bi', 'bj', 'bm', 'bn', 'bo', 'br', 'bs', 'bt', 'bv', 'bw', 'by', 'bz', 'ca',
@@ -29,9 +31,4 @@ $iconNames = array( 'ad', 'ae', 'af', 'ag', 'ai', 'al', 'am', 'an', 'ao', 'ar',
 $icons = array();
 foreach ($iconNames as $v)
 	$icons[] = sf('%s.%s',$v,$format);
-
-$layout = bu::layout('bubujka_basic');
-$title = sf('%s %s',$name,' icons set');
-$layout->setTitle($title);
-$layout->setContent(bu::view('icons',array('icons'=>$icons,'prefix'=>$prefix)));
-$layout->generate();
+$layout->icons = $icons;

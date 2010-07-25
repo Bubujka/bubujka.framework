@@ -1,6 +1,8 @@
 <?php
+$layout->_content_view = 'icons';
 $name = 'FamFamFam:Mini';
-$prefix = 'ico/famfamfam/mini/gif/';
+$layout->title = sf('%s %s',$name,' icons set');
+$layout->prefix = 'ico/famfamfam/mini/gif/';
 $icons = array( 'action_back.gif', 'action_forward.gif', 'action_go.gif',
 'action_paste.gif', 'action_print.gif', 'action_refresh_blue.gif',
 'action_refresh.gif', 'action_save.gif', 'action_stop.gif',
@@ -42,9 +44,4 @@ $icons = array( 'action_back.gif', 'action_forward.gif', 'action_go.gif',
 'page_user_light.gif', 'page_video.gif', 'page_wizard.gif', 'table_delete.gif',
 'table.gif', 'tables.gif' );
 
-
-$layout = bu::layout('bubujka_basic');
-$title = sf('%s %s',$name,' icons set');
-$layout->setTitle($title);
-$layout->setContent(bu::view('icons',array('icons'=>$icons,'prefix'=>$prefix)));
-$layout->generate();
+$layout->icons = $icons;

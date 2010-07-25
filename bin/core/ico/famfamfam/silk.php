@@ -1,6 +1,8 @@
 <?php
+$layout->_content_view = 'icons';
 $name = 'FamFamFam:Silk';
-$prefix = 'ico/famfamfam/silk/png/';
+$layout->prefix = 'ico/famfamfam/silk/png/';
+$layout->title = sf('%s %s',$name,' icons set');
 $icons = array( 'accept.png', 'add.png', 'anchor.png', 'application_add.png',
 'application_cascade.png', 'application_delete.png', 'application_double.png',
 'application_edit.png', 'application_error.png', 'application_form_add.png',
@@ -282,10 +284,4 @@ $icons = array( 'accept.png', 'add.png', 'anchor.png', 'application_add.png',
 'world.png', 'wrench_orange.png', 'wrench.png', 'xhtml_add.png',
 'xhtml_delete.png', 'xhtml_go.png', 'xhtml.png', 'xhtml_valid.png',
 'zoom_in.png', 'zoom_out.png', 'zoom.png');
-
-
-$layout = bu::layout('bubujka_basic');
-$title = sf('%s %s',$name,' icons set');
-$layout->setTitle($title);
-$layout->setContent(bu::view('icons',array('icons'=>$icons,'prefix'=>$prefix)));
-$layout->generate();
+$layout->icons = $icons;

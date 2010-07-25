@@ -79,21 +79,22 @@ class bu{
             print ('--'.$text.'--');
     }
     public static function redirect($url){
-        $pages = bu::session('pages');
-	if($pages['num_redirects'] >= 5)
-		$url = '/';
         if($url=='back'){
+            $pages = bu::session('pages');
             $url = $pages['previous'];
         }
-	$pages['num_redirects']++;
-	bu::session('pages',$pages);
         header('Location: '.$url);
         exit;
     }
 
+    private static $_last_bu_url_instance = false;
     private static $_path = false;
+    public static function setBuUrlInstance($i){
+	    self::$_last_bu_url_instance = $i;
+    }
     public static function args($segment = false){
-        $args = BuUrl::getVars();
+	$i = self::$_last_bu_url_instance;
+        $args = $i->getVars();
         if ($segment === false)
             return $args;
         if(!array_key_exists($segment, $args))
@@ -101,8 +102,10 @@ class bu{
         return $args[$segment];
     }
     public static function path($segment = false){
-        if(self::$_path === false)
-            self::$_path = BuUrl::getPath();
+	if(self::$_path === false){
+		$i = self::$_last_bu_url_instance;
+		self::$_path = $i->getPath();
+	}
         if ($segment === false)
             return self::$_path;
         if(!array_key_exists($segment, self::$_path))
@@ -168,17 +171,9 @@ class bu{
         return self::$_ormPeer[$path];
     }
 
-    private static $_layouts = array();
-    public static function layout($name=null){
-        if(!$name)
-            $name = bu::config('rc/defaultLayout');
-        self::lib('bu/layout');
-        if(!isset(self::$_layouts[$name])){
-            self::lib('layout/'.$name);
-            $className = str_replace('_','',$name).'Layout';
-            self::$_layouts[$name] = new $className();
-        }
-        return self::$_layouts[$name];
+    public static function layout(){
+        bu::lib('bu/layout');
+	return buLayout::getInstance();
     }
 
     public static function pub($path){
@@ -208,6 +203,9 @@ class bu{
             foreach(array($hostDir,$prjDir,$coreDir) as $v)
                 if(file_exists($v.$path.'.php'))
                     return $v.$path.'.php';
+		elseif(file_exists($v.$path.'/index'.'.php'))
+                    return $v.$path.'/index'.'.php';
+
         }
 
         throw new Exception(sprintf($exceptionString, implode(', ',$pathArray)));

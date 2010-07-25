@@ -1,5 +1,3 @@
 <?php
-$layout = bu::layout('bubujka_basic');
-$layout->setTitle('Благодарности');
-$layout->setContent(bu::view('thanks_to'));
-$layout->generate();
+$layout->title = 'Благодарности';
+$layout->content = bu::view('thanks_to');
