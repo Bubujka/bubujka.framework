@@ -2,10 +2,6 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <?php echo bu::view('header/charset');?>
-    <?php echo bu::view('header/meta',
-                        array('title'=>$title, 
-                              'keywords'=>$keywords, 
-                              'description'=>$description));?>
 </head>
 <style>
 h1{

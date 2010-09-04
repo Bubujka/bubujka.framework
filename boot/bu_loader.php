@@ -20,15 +20,16 @@ class BuLoader{
 	}
 	public static function DoIt(){
 		self::prepareHttpString();
+		ob_start();
 		try{
 			$url = new BuUrl2(self::$httpString);
 			bu::setBuUrlInstance($url);
 			self::runController($url);
 		}catch(Exception $e){
+			ob_end_clean();
 			$msg = 'Ошибка на сайте';
 			if(bu::config('rc/debug'))
 				$msg = get_class($e).': '.$e->getMessage();
-			$layout = bu::layout('panic');
 			$content = $msg;
 			if(bu::config('rc/debug')){
 				$content .= sprintf('<br><b>%s</b><br>',get_class($e));
@@ -38,8 +39,8 @@ class BuLoader{
 						$content .= $v['line'].' '.$v['file']."\n";
 				$content .= "</pre>";
 			}
-			$layout->content = $content;
-			$layout->generate();
+			echo bu::view('layout/panic',
+				      array('content'=>$content));
 		}
 	}
 }
